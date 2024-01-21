@@ -1,7 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidV4 } from "uuid";
 import z from "zod";
 
 import { Bindings } from "@/bindings";
@@ -73,15 +73,15 @@ auth.get(
       if (!userResponse.ok) {
         return c.text("Failed to get the user info", 500);
       }
-      const userJson: { [key in string]?: string } = await userResponse.json();
-      const userName = userJson.login;
-      if (!userName) {
-        return c.text("Unauthorized", 401);
+      const userJson: { id: number } = await userResponse.json();
+      const userId = userJson.id.toString();
+      if (userId !== c.env.GITHUB_ADMIN_ID) {
+        return c.text("Forbidden: Your account is not admin", 403);
       }
 
       // start a session
       const ttl = 60 * 60 * 24;
-      const sessionId = uuidv4();
+      const sessionId = uuidV4();
       setCookie(c, "session_id", sessionId, {
         httpOnly: true,
         secure: true,
@@ -89,13 +89,14 @@ auth.get(
         maxAge: ttl,
         path: "/",
       });
-      await c.env.KV.put(sessionId, userName, {
+      await c.env.KV.put(sessionId, userId, {
         expirationTtl: ttl,
       });
-      return c.redirect("/test", 302);
+
+      return c.text(`Sign in as admin (${c.env.GITHUB_ADMIN_ID})`, 200);
     } catch (e) {
       console.log(e);
-      c.text(`Internal Server Error: ${e}`, 500);
+      return c.text(`Internal Server Error: ${e}`, 500);
     }
   },
 );

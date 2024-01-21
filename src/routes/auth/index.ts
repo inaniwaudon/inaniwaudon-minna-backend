@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
-import uuid from "uuid";
+import { v4 as uuidV4 } from "uuid";
 
 import { Bindings } from "@/bindings";
 import callback from "./callback";
@@ -9,7 +9,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 // c.f. https://github.com/inaniwaudon/oauth-test
 app.get("/signin", async (c) => {
-  const state = uuid.v4();
+  const state = uuidV4();
   setCookie(c, "state", state, {
     httpOnly: true,
     secure: true,
@@ -32,7 +32,7 @@ app.get("/signout", (c) => {
     path: "/",
   });
   c.env.KV.delete(sessionId);
-  return c.text("Logouted", 200);
+  return c.text("Sign out", 200);
 });
 
 app.route("/callback", callback);

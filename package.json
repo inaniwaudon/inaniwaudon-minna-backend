@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "wrangler dev src/index.ts",
+    "dev": "wrangler dev src/index.ts --remote",
     "deploy": "wrangler deploy --minify src/index.ts",
     "lint": "biome lint ./src --max-diagnostics=200",
     "format": "biome format ./src --write --max-diagnostics=200"
@@ -8,7 +8,8 @@
   "dependencies": {
     "@hono/zod-validator": "^0.1.11",
     "hono": "^3.12.6",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.5.2",
