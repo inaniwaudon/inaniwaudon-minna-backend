@@ -60,28 +60,28 @@ const allTransportation: Transportation = {
     {
       location: "鶴見",
       id: uuids[0],
-      datetime: new Date("2024-01-01T06:22:00+09:00"),
+      datetime: "2024-01-01T06:22:00+09:00",
       photos: [],
       description: "",
     },
     {
       location: "鶴見小野",
       id: uuids[1],
-      datetime: new Date("2024-01-01T08:03:00+09:00"),
+      datetime: "2024-01-01T08:03:00+09:00",
       photos: [],
       description: "鶴見線はいいですね〜〜\nローカル路線",
     },
     {
       location: "ふれ〜ゆ",
       id: uuids[2],
-      datetime: new Date("2024-01-01T09:16:00+09:00"),
+      datetime: "2024-01-01T09:16:00+09:00",
       photos: [],
       description: "プール",
     },
     {
       location: "海芝浦",
       id: uuids[3],
-      datetime: new Date("2024-01-01T10:33:00+09:00"),
+      datetime: "2024-01-01T10:33:00+09:00",
       photos: [
         {
           src: "https://example.com/image0.webp",

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const checkinSchema = z.object({
   location: z.string(),
   id: z.string().uuid(),
-  datetime: z.date().min(new Date(2020, 0, 1)),
+  datetime: z.string().datetime({ offset: true }),
   photos: z.array(
     z.object({
       src: z.string(),
@@ -55,7 +55,7 @@ export const parseTransportation = (text: string) => {
       const location = locationResult[1].trim();
       checkins.push({
         id: "",
-        datetime: new Date(1900, 0, 1),
+        datetime: "",
         location,
         photos: [],
         description: "",
@@ -77,7 +77,9 @@ export const parseTransportation = (text: string) => {
     // 日時
     const dateResult = line.match(/^- date:(.*)/);
     if (dateResult) {
-      checkin.datetime = new Date(dateResult[1].trim());
+      checkin.datetime = dateToISOStringWithTimezone(
+        new Date(dateResult[1].trim()),
+      );
       continue;
     }
     // 写真
@@ -138,7 +140,7 @@ export const stringifyTransportation = (transportation: Transportation) => {
       [`## ${checkin.location}`],
       [
         `- id: ${checkin.id}`,
-        `- date: ${dateToISOStringWithTimezone(checkin.datetime)}`,
+        `- date: ${dateToISOStringWithTimezone(new Date(checkin.datetime))}`,
       ],
     ];
     if (checkin.description.length > 0) {
@@ -162,4 +164,10 @@ export const stringifyTransportation = (transportation: Transportation) => {
     .map((parts) => parts.map((part) => part.join("\n")).join("\n\n"))
     .join("\n\n");
   return `${text}\n`;
+};
+
+export const sortCheckins = (checkins: Checkin[]) => {
+  return checkins.sort((a, b) => {
+    return new Date(a.datetime).getTime() - new Date(b.datetime).getTime();
+  });
 };

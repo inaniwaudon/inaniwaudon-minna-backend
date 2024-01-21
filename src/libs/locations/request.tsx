@@ -82,3 +82,39 @@ export const updateTransportation = async (
     );
   }
 };
+
+export const getLocationImageKey = (id: string, imageId: string) => {
+  return `locations/${id}/${imageId}.webp`;
+};
+
+export const fetchNearbyPlaces = async (
+  latitude: string,
+  longitude: string,
+  query: string | null,
+  limit: number,
+  apiKey: string,
+) => {
+  const endpoint = "https://api.foursquare.com/v3/places/nearby";
+  const params = new URLSearchParams({
+    ll: `${latitude},${longitude}`,
+    limit: limit.toString(),
+  });
+  if (query) {
+    params.append("query", query);
+  }
+
+  try {
+    const response = await fetch(`${endpoint}?${params.toString()}`, {
+      headers: {
+        Authorization: apiKey,
+      },
+    });
+    const json = (await response.json()) as any;
+    if (!response.ok) {
+      return fail(json.message);
+    }
+    return succeed(json);
+  } catch (e) {
+    return fail(e);
+  }
+};
