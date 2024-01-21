@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "dev": "wrangler dev src/index.ts",
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "lint": "biome lint ./src --max-diagnostics=200",
+    "format": "biome format ./src --write --max-diagnostics=200"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.1.11",
+    "hono": "^3.12.6",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.5.2",
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@types/uuid": "^9.0.7",
+    "wrangler": "^3.22.0"
+  }
+}
