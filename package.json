@@ -3,7 +3,8 @@
     "dev": "wrangler dev src/index.ts --remote",
     "deploy": "wrangler deploy --minify src/index.ts",
     "lint": "biome lint ./src --max-diagnostics=200",
-    "format": "biome format ./src --write --max-diagnostics=200"
+    "format": "biome format ./src --write --max-diagnostics=200",
+    "test": "jest"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.1.11",
@@ -14,7 +15,11 @@
   "devDependencies": {
     "@biomejs/biome": "^1.5.2",
     "@cloudflare/workers-types": "^4.20231218.0",
+    "@types/jest": "^29.5.11",
     "@types/uuid": "^9.0.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3",
     "wrangler": "^3.22.0"
   }
 }

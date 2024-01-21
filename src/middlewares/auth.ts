@@ -1,6 +1,7 @@
-import { Bindings } from "@/bindings";
 import { MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
+
+import { Bindings } from "@/bindings";
 
 export const authorize: MiddlewareHandler<{
   Bindings: Bindings;
