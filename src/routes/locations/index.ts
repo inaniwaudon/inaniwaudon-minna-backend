@@ -40,7 +40,40 @@ app.get("/places", zValidator("query", getPlacesQuerySchema), async (c) => {
   if (!result.success) {
     return c.text(result.value, 500);
   }
-  return c.json(result);
+
+  const places: {
+    fsq_id: string;
+    distance: number;
+    geocodes: {
+      main: {
+        latitude: number;
+        longitude: number;
+      };
+    };
+    location: {
+      address?: string;
+      address_extended?: string;
+      country: string;
+      cross_street?: string;
+      formatted_address: string;
+      locality?: string;
+      postcode?: string;
+      region: string;
+    };
+    name: string;
+  }[] = result.value.results;
+
+  const formatted = places.map((place) => ({
+    fsq_id: place.fsq_id,
+    geocodes: {
+      latitude: place.geocodes.main.latitude,
+      longitude: place.geocodes.main.longitude,
+    },
+    distance: place.distance,
+    location: place.location,
+    name: place.name,
+  }));
+  return c.json(formatted);
 });
 
 // 移動の取得

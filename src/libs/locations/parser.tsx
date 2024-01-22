@@ -1,17 +1,26 @@
 import { z } from "zod";
 
+export const foursquarePlaceSchema = z.object({
+  fsqId: z.string().min(1),
+  name: z.string().min(1),
+  latitude: z.number(),
+  longitude: z.number(),
+  formattedAddress: z.string().min(1),
+});
+
 export const checkinSchema = z.object({
-  location: z.string(),
+  location: z.string().min(1),
   id: z.string().uuid(),
   datetime: z.string().datetime({ offset: true }),
+  fsqPlace: foursquarePlaceSchema.optional(),
+  description: z.string(),
   photos: z.array(
     z.object({
-      src: z.string(),
+      src: z.string().min(1),
       alt: z.string(),
       caption: z.optional(z.string()),
     }),
   ),
-  description: z.string(),
 });
 
 export const transportationSchema = z.object({
@@ -20,6 +29,7 @@ export const transportationSchema = z.object({
   checkins: z.array(checkinSchema),
 });
 
+export type FoursquarePlace = z.infer<typeof foursquarePlaceSchema>;
 export type Checkin = z.infer<typeof checkinSchema>;
 export type Transportation = z.infer<typeof transportationSchema>;
 
@@ -74,6 +84,7 @@ export const parseTransportation = (text: string) => {
       checkin.id = idResult[1].trim();
       continue;
     }
+
     // 日時
     const dateResult = line.match(/^- date:(.*)/);
     if (dateResult) {
@@ -82,6 +93,56 @@ export const parseTransportation = (text: string) => {
       );
       continue;
     }
+
+    // Foursquare の位置情報
+    const addFsqPlace = () => {
+      if (checkin.fsqPlace) {
+        return;
+      }
+      checkin.fsqPlace = {
+        fsqId: "",
+        name: "",
+        latitude: 0,
+        longitude: 0,
+        formattedAddress: "",
+      };
+    };
+
+    const fsqIdResult = line.match(/^-\s*fsq_id:(.+)/);
+    const fsqNameResult = line.match(/^-\s*fsq_name:(.+)/);
+    const fsqLatitudeResult = line.match(/^-\s*fsq_latitude:(.+)/);
+    const fsqLongitudeResult = line.match(/^-\s*fsq_longitude:(.+)/);
+    const fsqAddressResult = line.match(/^-\s*fsq_address:(.+)/);
+
+    const isFsq =
+      fsqIdResult ||
+      fsqNameResult ||
+      fsqLatitudeResult ||
+      fsqLongitudeResult ||
+      fsqAddressResult;
+
+    if (isFsq) {
+      addFsqPlace();
+    }
+    if (fsqIdResult) {
+      checkin.fsqPlace!.fsqId = fsqIdResult[1].trim();
+    }
+    if (fsqNameResult) {
+      checkin.fsqPlace!.name = fsqNameResult[1].trim();
+    }
+    if (fsqLatitudeResult) {
+      checkin.fsqPlace!.latitude = parseFloat(fsqLatitudeResult[1].trim());
+    }
+    if (fsqLongitudeResult) {
+      checkin.fsqPlace!.longitude = parseFloat(fsqLongitudeResult[1].trim());
+    }
+    if (fsqAddressResult) {
+      checkin.fsqPlace!.formattedAddress = fsqAddressResult[1].trim();
+    }
+    if (isFsq) {
+      continue;
+    }
+
     // 写真
     const photoResult = line.match(/^!\[(.*)\]\((.*)\)/);
     if (photoResult) {
@@ -94,7 +155,6 @@ export const parseTransportation = (text: string) => {
       checkin.photos.at(-1)!.caption = captionResult[1];
       continue;
     }
-    // TODO: Swarm
 
     // 説明文
     const trimedLine = line.trim();
@@ -143,6 +203,19 @@ export const stringifyTransportation = (transportation: Transportation) => {
         `- date: ${dateToISOStringWithTimezone(new Date(checkin.datetime))}`,
       ],
     ];
+
+    // Foursquare の位置情報
+    if (checkin.fsqPlace) {
+      parts.push([
+        `- fsq_id: ${checkin.fsqPlace.fsqId}`,
+        `- fsq_name: ${checkin.fsqPlace.name}`,
+        `- fsq_latitude: ${checkin.fsqPlace.latitude}`,
+        `- fsq_longitude: ${checkin.fsqPlace.longitude}`,
+        `- fsq_address: ${checkin.fsqPlace.formattedAddress}`,
+      ]);
+    }
+
+    // 説明文
     if (checkin.description.length > 0) {
       parts.push([checkin.description]);
     }

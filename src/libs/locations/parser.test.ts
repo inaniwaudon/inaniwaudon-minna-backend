@@ -34,6 +34,12 @@ const allText = `# 鶴見散歩
 - id: ${uuids[2]}
 - date: 2024-01-01T09:16:00+09:00
 
+- fsq_id: 4caeeb861463a143f92490a9
+- fsq_name: 横浜市高齢者保養研修施設 ふれーゆ
+- fsq_latitude: 35.479997
+- fsq_longitude: 139.688232
+- fsq_address: 鶴見区末広町1-15-2, 横浜市, 神奈川県, 230-0045
+
 プール
 
 ## 海芝浦
@@ -75,6 +81,13 @@ const allTransportation: Transportation = {
       location: "ふれ〜ゆ",
       id: uuids[2],
       datetime: "2024-01-01T09:16:00+09:00",
+      fsqPlace: {
+        fsqId: "4caeeb861463a143f92490a9",
+        name: "横浜市高齢者保養研修施設 ふれーゆ",
+        latitude: 35.479997,
+        longitude: 139.688232,
+        formattedAddress: "鶴見区末広町1-15-2, 横浜市, 神奈川県, 230-0045",
+      },
       photos: [],
       description: "プール",
     },
