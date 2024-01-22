@@ -9,8 +9,8 @@
       "esnext"
     ],
     "types": [
+      "@types/jest",
       "@cloudflare/workers-types",
-      "@types/jest"
     ],
     "baseUrl": "./",
     "paths": {

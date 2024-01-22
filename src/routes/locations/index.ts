@@ -1,3 +1,4 @@
+import { Buffer } from "buffer";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { v4 as uuidV4 } from "uuid";
@@ -43,11 +44,11 @@ app.get("/places", zValidator("query", getPlacesQuerySchema), async (c) => {
 });
 
 // 移動の取得
-const getQuerySchema = z.object({
+const getParamSchema = z.object({
   id: z.string(),
 });
 
-app.get("/:id", zValidator("param", getQuerySchema), async (c) => {
+app.get("/:id", zValidator("param", getParamSchema), async (c) => {
   const { id } = c.req.valid("param");
 
   const readResult = await getTransportation(
@@ -175,30 +176,47 @@ app.delete(
 );
 
 // 画像のアップロード
-const postImageSchema = z.object({
+const postImageParamSchema = z.object({
   id: z.string(),
 });
 
-app.post("/:id/images", zValidator("param", postImageSchema), async (c) => {
-  const { id } = c.req.valid("param");
-  const imageId = uuidV4();
-  const key = getLocationImageKey(id, imageId);
-
-  try {
-    const buffer = await c.req.arrayBuffer();
-    // 3MB 以上はアップロードできない
-    if (buffer.byteLength > 1024 * 1024 * 3) {
-      return c.text("The file size is required to less than 3 MB", 413);
-    }
-    await c.env.R2.put(key, buffer);
-  } catch (e) {
-    console.log(e);
-    return c.text(`Failed to upload an image: ${e}`, 500);
-  }
-  return c.json({ id, imageId }, 201);
+const postImageJsonSchema = z.object({
+  images: z.array(z.string()),
 });
 
-const deleteImageSchema = z.object({
+app.post(
+  "/:id/images",
+  zValidator("param", postImageParamSchema),
+  zValidator("json", postImageJsonSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { images } = c.req.valid("json");
+
+    const imageIds: string[] = images.map(() => uuidV4());
+
+    for (let i = 0; i < images.length; i++) {
+      const key = getLocationImageKey(id, imageIds[i]);
+
+      try {
+        const buffer = Buffer.from(
+          images[i].replace("data:image/webp;base64,", ""),
+          "base64",
+        );
+        // 3 MB を越えるファイルのアップロードを制限
+        if (buffer.byteLength > 1024 * 1024 * 3) {
+          return c.text("The file size is required to less than 3 MB", 413);
+        }
+        await c.env.R2.put(key, buffer);
+      } catch (e) {
+        console.log(e);
+        return c.text(`Failed to upload an image: ${e}`, 500);
+      }
+    }
+    return c.json(imageIds, 201);
+  },
+);
+
+const deleteImageParamSchema = z.object({
   id: z.string(),
   imageId: z.string().uuid(),
 });
@@ -206,7 +224,7 @@ const deleteImageSchema = z.object({
 // 画像の削除
 app.delete(
   "/:id/images/:imageId",
-  zValidator("param", deleteImageSchema),
+  zValidator("param", deleteImageParamSchema),
   async (c) => {
     const { id, imageId } = c.req.valid("param");
 
