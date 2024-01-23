@@ -3,9 +3,9 @@ import { z } from "zod";
 export const foursquarePlaceSchema = z.object({
   fsqId: z.string().min(1),
   name: z.string().min(1),
-  latitude: z.number(),
-  longitude: z.number(),
   formattedAddress: z.string().min(1),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export const checkinSchema = z.object({
@@ -122,8 +122,6 @@ export const parseTransportation = (text: string) => {
       checkin.fsqPlace = {
         fsqId: "",
         name: "",
-        latitude: 0,
-        longitude: 0,
         formattedAddress: "",
       };
     };
@@ -226,13 +224,18 @@ export const stringifyTransportation = (transportation: Transportation) => {
 
     // Foursquare の位置情報
     if (checkin.fsqPlace) {
-      parts.push([
+      const part = [
         `- fsq_id: ${checkin.fsqPlace.fsqId}`,
         `- fsq_name: ${checkin.fsqPlace.name}`,
-        `- fsq_latitude: ${checkin.fsqPlace.latitude}`,
-        `- fsq_longitude: ${checkin.fsqPlace.longitude}`,
         `- fsq_address: ${checkin.fsqPlace.formattedAddress}`,
-      ]);
+      ];
+      if (checkin.fsqPlace.latitude && checkin.fsqPlace.longitude) {
+        part.push(
+          `- fsq_latitude: ${checkin.fsqPlace.latitude}`,
+          `- fsq_longitude: ${checkin.fsqPlace.longitude}`,
+        );
+      }
+      parts.push(part);
     }
 
     // 説明文
