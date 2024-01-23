@@ -1,0 +1,17 @@
+name = "inaniwaudon-minna-backend"
+compatibility_date = "2023-12-01"
+node_compat = true
+
+[[kv_namespaces]]
+binding = "KV"
+id = <id>
+preview_id = <preview_id>
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = <bucket_name>
+preview_bucket_name = <bucket_name>
+
+[vars]
+GITHUB_CLIENT_ID = <GITHUB_CLIENT_ID>
+GITHUB_ADMIN_ID = <GITHUB_ADMIN_ID>

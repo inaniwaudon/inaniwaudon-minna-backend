@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Bindings } from "@/bindings";
 import {
+  FoursquareOriginalPlace,
   Transportation,
   checkinSchema,
   sortCheckins,
@@ -16,7 +17,7 @@ import {
   getTransportation,
   updateTransportation,
 } from "@/libs/locations/request";
-// import { authorize } from "@/middlewares/auth";
+import { authorize } from "@/middlewares/auth";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -27,54 +28,64 @@ const getPlacesQuerySchema = z.object({
   query: z.string().optional(),
 });
 
-app.get("/places", zValidator("query", getPlacesQuerySchema), async (c) => {
-  const { latitude, longitude, query } = c.req.valid("query");
+app.get(
+  "/places",
+  zValidator("query", getPlacesQuerySchema),
+  authorize,
+  async (c) => {
+    const { latitude, longitude, query } = c.req.valid("query");
 
-  const result = await fetchNearbyPlaces(
-    latitude,
-    longitude,
-    query ?? null,
-    50,
-    c.env.FOURSQUARE_API_KEY,
-  );
-  if (!result.success) {
-    return c.text(result.value, 500);
-  }
+    const result = await fetchNearbyPlaces(
+      latitude,
+      longitude,
+      query ?? null,
+      50,
+      c.env.FOURSQUARE_API_KEY,
+    );
+    if (!result.success) {
+      return c.text(result.value, 500);
+    }
 
-  const places: {
-    fsq_id: string;
-    distance: number;
-    geocodes: {
-      main: {
-        latitude: number;
-        longitude: number;
+    const places: {
+      fsq_id: string;
+      distance?: number;
+      geocodes: {
+        main?: {
+          latitude: number;
+          longitude: number;
+        };
       };
-    };
-    location: {
-      address?: string;
-      address_extended?: string;
-      country: string;
-      cross_street?: string;
-      formatted_address: string;
-      locality?: string;
-      postcode?: string;
-      region: string;
-    };
-    name: string;
-  }[] = result.value.results;
+      location: {
+        address?: string;
+        address_extended?: string;
+        country: string;
+        cross_street?: string;
+        formatted_address: string;
+        locality?: string;
+        postcode?: string;
+        region: string;
+      };
+      name: string;
+    }[] = result.value.results;
 
-  const formatted = places.map((place) => ({
-    fsq_id: place.fsq_id,
-    geocodes: {
-      latitude: place.geocodes.main.latitude,
-      longitude: place.geocodes.main.longitude,
-    },
-    distance: place.distance,
-    location: place.location,
-    name: place.name,
-  }));
-  return c.json(formatted);
-});
+    const formatted = places.map((place) => {
+      const newPlace: FoursquareOriginalPlace = {
+        fsq_id: place.fsq_id,
+        distance: place.distance,
+        location: place.location,
+        name: place.name,
+      };
+      if (place.geocodes.main) {
+        newPlace.geocodes = {
+          latitude: place.geocodes.main.latitude,
+          longitude: place.geocodes.main.longitude,
+        };
+      }
+      return newPlace;
+    });
+    return c.json(formatted);
+  },
+);
 
 // 移動の取得
 const getParamSchema = z.object({
@@ -102,7 +113,7 @@ const postJsonSchema = z.object({
 });
 
 // 移動の新規作成
-app.post("/", zValidator("json", postJsonSchema), async (c) => {
+app.post("/", zValidator("json", postJsonSchema), authorize, async (c) => {
   const { id, title, date } = c.req.valid("json");
 
   const transportation: Transportation = {
@@ -132,6 +143,7 @@ app.put(
   "/:id/checkins/:checkinId",
   zValidator("param", checkinParamSchema),
   zValidator("json", checkinSchema),
+  authorize,
   async (c) => {
     const { id, checkinId } = c.req.valid("param");
     const checkin = c.req.valid("json");
@@ -158,7 +170,7 @@ app.put(
     } else {
       transportation.checkins.push(checkin);
     }
-    sortCheckins(readResult.value.checkins);
+    sortCheckins(transportation.checkins);
 
     // 更新
     const updateResult = await updateTransportation(
@@ -178,6 +190,7 @@ app.put(
 app.delete(
   "/:id/checkins/:checkinId",
   zValidator("param", checkinParamSchema),
+  authorize,
   async (c) => {
     const { id, checkinId } = c.req.valid("param");
 
@@ -221,6 +234,7 @@ app.post(
   "/:id/images",
   zValidator("param", postImageParamSchema),
   zValidator("json", postImageJsonSchema),
+  authorize,
   async (c) => {
     const { id } = c.req.valid("param");
     const { images } = c.req.valid("json");
@@ -258,6 +272,7 @@ const deleteImageParamSchema = z.object({
 app.delete(
   "/:id/images/:imageId",
   zValidator("param", deleteImageParamSchema),
+  authorize,
   async (c) => {
     const { id, imageId } = c.req.valid("param");
 

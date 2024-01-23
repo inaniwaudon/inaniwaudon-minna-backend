@@ -6,11 +6,13 @@ import auth from "./routes/auth";
 import locations from "./routes/locations";
 
 const app = new Hono<{ Bindings: Bindings }>();
-app.use(
-  "/*",
+app.use("/*", async (c, next) =>
   cors({
-    origin: ["http://localhost:3000", "https://xn--n8je9hcf0t4a.xn--q9jyb4c"],
-  }),
+    allowMethods: ["POST", "GET", "PUT", "OPTIONS", "PATCH", "DELETE"],
+    maxAge: 86400,
+    origin: [c.env.FRONTEND_URL, c.env.FRONTEND_DEV_URL],
+    credentials: true,
+  })(c, next),
 );
 
 app.get("/", (c) => {

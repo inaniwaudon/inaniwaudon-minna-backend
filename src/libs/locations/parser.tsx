@@ -33,6 +33,26 @@ export type FoursquarePlace = z.infer<typeof foursquarePlaceSchema>;
 export type Checkin = z.infer<typeof checkinSchema>;
 export type Transportation = z.infer<typeof transportationSchema>;
 
+export interface FoursquareOriginalPlace {
+  fsq_id: string;
+  geocodes?: {
+    latitude: number;
+    longitude: number;
+  };
+  distance?: number;
+  location: {
+    address?: string;
+    address_extended?: string;
+    country: string;
+    cross_street?: string;
+    formatted_address: string;
+    locality?: string;
+    postcode?: string;
+    region: string;
+  };
+  name: string;
+}
+
 export const parseTransportation = (text: string) => {
   const lines = text.split("\n");
   const checkins: Checkin[] = [];

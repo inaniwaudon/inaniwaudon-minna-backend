@@ -1,6 +1,8 @@
 export type Bindings = {
   KV: KVNamespace;
   R2: R2Bucket;
+  FRONTEND_URL: string;
+  FRONTEND_DEV_URL: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   GITHUB_ADMIN_ID: string;

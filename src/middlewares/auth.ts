@@ -16,5 +16,5 @@ export const authorize: MiddlewareHandler<{
     return c.text("Unauthorized", 401);
   }
   c.set("userId", userId);
-  next();
+  await next();
 };
