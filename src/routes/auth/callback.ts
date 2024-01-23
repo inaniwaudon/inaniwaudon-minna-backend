@@ -20,6 +20,7 @@ const auth = new Hono<{ Bindings: Bindings }>();
 const paramSchema = z.object({
   code: z.string(),
   state: z.string(),
+  callback: z.string().optional(),
 });
 
 auth.get(
@@ -30,16 +31,16 @@ auth.get(
     }
   }),
   async (c) => {
-    const param = c.req.valid("query");
+    const { code, state, callback } = c.req.valid("query");
 
-    // CSRF measure
-    const state = getCookie(c, "state")!;
-    if (state === undefined || state !== param.state) {
+    // CSRF 対策
+    const cookieState = getCookie(c, "state")!;
+    if (cookieState === undefined || cookieState !== state) {
       return c.text("Invalid state.", 400);
     }
 
     try {
-      // get an access token
+      // アクセストークンを取得
       const accessTokenResponse = await fetch(GITHUB_ACCESS_TOKEN_URL, {
         method: "POST",
         headers: {
@@ -49,7 +50,7 @@ auth.get(
         body: JSON.stringify({
           client_id: c.env.GITHUB_CLIENT_ID,
           client_secret: c.env.GITHUB_CLIENT_SECRET,
-          code: param.code,
+          code,
         }),
       });
       if (!accessTokenResponse.ok) {
@@ -61,7 +62,7 @@ auth.get(
         return c.text("Failed to get an access token", 500);
       }
 
-      // get a user name
+      // ユーザ名を検証
       const userResponse = await fetch(GITHUB_USER_URL, {
         headers: {
           Accept: "application/vnd.github+json",
@@ -79,7 +80,7 @@ auth.get(
         return c.text("Forbidden: Your account is not admin", 403);
       }
 
-      // start a session
+      // セッションを開始
       const ttl = 60 * 60 * 24;
       const sessionId = uuidV4();
       setCookie(c, "session_id", sessionId, {
@@ -93,6 +94,9 @@ auth.get(
         expirationTtl: ttl,
       });
 
+      if (callback) {
+        return c.redirect(callback, 302);
+      }
       return c.text(`Sign in as admin (${c.env.GITHUB_ADMIN_ID})`, 200);
     } catch (e) {
       console.log(e);
