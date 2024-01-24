@@ -27,6 +27,7 @@ app.get("/signin", zValidator("query", getSigninQuerySchema), async (c) => {
     }
   }
 
+  // state パラメータを生成
   const state = uuidV4();
   setCookie(c, "state", state, {
     httpOnly: true,
@@ -34,19 +35,18 @@ app.get("/signin", zValidator("query", getSigninQuerySchema), async (c) => {
     sameSite: "None",
     path: "/",
   });
-  const url = new URL("https://github.com/login/oauth/authorize");
-  url.searchParams.set("client_id", c.env.GITHUB_CLIENT_ID);
-  url.searchParams.set("state", state);
-  if (callback) {
-    url.searchParams.set(
-      "redirect_uri",
-      `http://localhost:8787/auth/callback?callback=${encodeURIComponent(
-        callback,
-      )}`,
-    );
-  }
 
-  return c.redirect(url.href, 302);
+  const oauthUrl = new URL("https://github.com/login/oauth/authorize");
+  oauthUrl.searchParams.set("client_id", c.env.GITHUB_CLIENT_ID);
+  oauthUrl.searchParams.set("state", state);
+
+  if (callback) {
+    const origin = new URL(c.req.url).origin;
+    const callbackUrl = new URL("/auth/callback", origin);
+    callbackUrl.searchParams.set("callback", callback);
+    oauthUrl.searchParams.set("redirect_uri", callbackUrl.href);
+  }
+  return c.redirect(oauthUrl.href, 302);
 });
 
 app.get("/signout", (c) => {
