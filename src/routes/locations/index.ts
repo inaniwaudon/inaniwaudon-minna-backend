@@ -239,14 +239,24 @@ app.post(
     const { id } = c.req.valid("param");
     const { images } = c.req.valid("json");
 
-    const imageIds: string[] = images.map(() => uuidV4());
+    const filenames: string[] = [];
 
     for (let i = 0; i < images.length; i++) {
-      const key = getLocationImageKey(id, imageIds[i]);
+      // base64 のプレフィックスを検証
+      const prefixRegex = /data:image\/([a-zA-Z]+);base64,/;
+      const execResult = prefixRegex.exec(images[i]);
+      if (execResult === null) {
+        return c.text("Invalid image data", 400);
+      }
+
+      const extension = execResult[1];
+      const filename = `${uuidV4()}.${extension}`;
+      filenames.push(filename);
+      const key = getLocationImageKey(id, filename);
 
       try {
         const buffer = Buffer.from(
-          images[i].replace("data:image/webp;base64,", ""),
+          images[i].replace(prefixRegex, ""),
           "base64",
         );
         // 3 MB を越えるファイルのアップロードを制限
@@ -259,25 +269,25 @@ app.post(
         return c.text(`Failed to upload an image: ${e}`, 500);
       }
     }
-    return c.json(imageIds, 201);
+    return c.json(filenames, 201);
   },
 );
 
 const deleteImageParamSchema = z.object({
   id: z.string(),
-  imageId: z.string().uuid(),
+  filename: z.string().uuid(),
 });
 
 // 画像の削除
 app.delete(
-  "/:id/images/:imageId",
+  "/:id/images/:filename",
   zValidator("param", deleteImageParamSchema),
   authorize,
   async (c) => {
-    const { id, imageId } = c.req.valid("param");
+    const { id, filename } = c.req.valid("param");
 
     try {
-      await c.env.R2.delete(getLocationImageKey(id, imageId));
+      await c.env.R2.delete(getLocationImageKey(id, filename));
     } catch (e) {
       console.log(e);
       return c.text(`Failed to delete the image: ${e}`, 500);

@@ -83,8 +83,8 @@ export const updateTransportation = async (
   }
 };
 
-export const getLocationImageKey = (id: string, imageId: string) => {
-  return `locations/${id}/${imageId}.webp`;
+export const getLocationImageKey = (id: string, filename: string) => {
+  return `locations/${id}/${filename}`;
 };
 
 export const fetchNearbyPlaces = async (
