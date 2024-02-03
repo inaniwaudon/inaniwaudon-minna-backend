@@ -1,6 +1,7 @@
 export type Bindings = {
   KV: KVNamespace;
   R2: R2Bucket;
+  DB: D1Database;
   FRONTEND_URL: string;
   FRONTEND_DEV_URL: string;
   GITHUB_CLIENT_ID: string;
