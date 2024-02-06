@@ -5,6 +5,7 @@ import { Bindings } from "./bindings";
 import auth from "./routes/auth";
 import locations from "./routes/locations";
 import tanka from "./routes/tanka";
+import tasks from "./routes/tasks";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -22,7 +23,8 @@ app.get("/", (c) => {
 });
 
 app.route("/auth", auth);
-app.route("/locations", locations);
-app.route("/tanka", tanka);
+app.route("/api/locations", locations);
+app.route("/api/tanka", tanka);
+app.route("/api/tasks", tasks);
 
 export default app;

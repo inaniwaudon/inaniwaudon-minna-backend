@@ -67,7 +67,7 @@ auth.get(
         headers: {
           Accept: "application/vnd.github+json",
           Authorization: `Bearer ${accessTokenJson.access_token}`,
-          "User-Agent": "photon",
+          "User-Agent": "inaniwaudon-minna",
           "X-GitHub-Api-Version": "2022-11-28",
         },
       });
