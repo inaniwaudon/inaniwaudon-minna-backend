@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { cache } from "hono/cache";
 import { z } from "zod";
 
 import { Bindings } from "@/bindings";
@@ -23,22 +24,34 @@ app.route("/reaction", reaction);
 // 短歌一覧の取得
 export type TankaGETResult = Tanka[];
 
-app.get("/", async (c) => {
-  try {
-    const executed = await c.env.DB.prepare(
-      `SELECT t.id, t.tanka, t.name, t.ip, t.comment, t.supplement, COUNT(tr.id) AS plusone_count
+app.get(
+  "/",
+  cache({
+    cacheName: "inaniwaudon-minna-backend",
+    cacheControl: "max-age=60",
+  }),
+  async (c) => {
+    try {
+      const executed = await c.env.DB.prepare(
+        `SELECT t.id, t.tanka, t.name, t.ip, t.comment, t.supplement,
+          COALESCE(r.plusone_count, 0) AS plusone_count
         FROM tanka AS t
-        LEFT OUTER JOIN tanka_reaction tr ON t.id = tr.tanka_id AND tr.reaction = 'plusone'
-        WHERE deleted_at IS NULL
-        GROUP BY t.id
+        LEFT JOIN (
+          SELECT CAST(tanka_id AS INTEGER) AS tanka_id_int, COUNT(*) AS plusone_count
+          FROM tanka_reaction
+          WHERE reaction = 'plusone'
+          GROUP BY tanka_id
+        ) AS r ON t.id = r.tanka_id_int
+        WHERE t.deleted_at IS NULL
         ORDER BY t.id DESC;`,
-    ).all();
-    const results = executed.results as any as TankaGETResult;
-    return c.json(results);
-  } catch (e: any) {
-    return c.text(e, 500);
-  }
-});
+      ).all();
+      const results = executed.results as any as TankaGETResult;
+      return c.json(results);
+    } catch (e: any) {
+      return c.text(e, 500);
+    }
+  },
+);
 
 // 短歌の追加
 const postJsonSchema = z.object({

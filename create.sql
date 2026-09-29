@@ -17,3 +17,12 @@ CREATE TABLE tanka_reaction(
   created_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
   FOREIGN KEY (tanka_id) REFERENCES tanka(id)
 );
+
+-- LEFT JOIN ON tanka_id AND reaction = 'plusone' 用
+CREATE INDEX idx_tanka_reaction_tanka_reaction ON tanka_reaction(tanka_id, reaction);
+
+-- WHERE deleted_at IS NULL 用
+CREATE INDEX idx_tanka_deleted_at ON tanka(deleted_at);
+
+-- SELECT count(*) WHERE tanka_id = ? AND ip = ? 用
+CREATE INDEX idx_tanka_reaction_tanka_ip ON tanka_reaction(tanka_id, ip);
